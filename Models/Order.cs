@@ -2,33 +2,28 @@
 {
     public class Order
     {
-        public OrderType? Type { get; set; }
+        public string? 订单类型 { get; set; }
 
-        public string? Code { get; set; }
+        public string? 订单号 { get; set; }
 
-        public string? CustomerCode { get; set; }
+        public string? 客户编号 { get; set; }
 
-        public string? CustomerName { get; set; }
+        public string? 客户名称 { get; set; }
 
-        public decimal? Price { get; set; }
+        public decimal? 总价 { get; set; }
 
-        public DateTime Date { get; set; }
+        public DateTime 业务日期 { get; set; }
 
-        public List<OrderItem>? Items { get; set; }
+        public OrderItem[] 订单明细 { get; set; }
     }
 
     public class OrderItem
     {
-        public int ItemId { get; set; }
+        public string? 产品编号 { get; set; }
 
-        public string? ProductName { get; set; }
+        public string? 产品名称 { get; set; }
 
-        public int Quantity { get; set; }
+        public int 数量 { get; set; }
     }
 
-    public enum OrderType 
-    {
-       Type1,
-       Type2, Type3, Type4, Type5, Type6,
-    }
 }

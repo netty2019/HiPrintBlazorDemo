@@ -37,6 +37,14 @@ function buildDesigner() {
     hiprintTemplate.design("#hiprint-printTemplate", { grid: true }); // 0.0.46版本新增, 是否显示网格
 }
 
+
+//创建HiprintTemplate对象
+function createHiprintTemplate() {
+    hiprintTemplate = new hiprint.PrintTemplate({});
+}
+
+
+
 //构建左侧拖拽面板
 function buildProvider(data, clear) {
     // 组装 provider
@@ -85,10 +93,36 @@ function update(json) {
 }
 
 
-//打印
+//浏览器打印
 function print(printData) {
     hiprintTemplate.print(printData);
 }
+
+
+//设置打印客户端地址 例：http://localhost:17521
+function setHost(address) {
+    hiprint.hiwebSocket.setHost(address);
+}
+
+//与打印客户端是否成功连接
+function isOpened() {
+    return hiprint.hiwebSocket.opened;
+}
+
+
+//获取打印机列表
+function getPrinterList() {
+    var x = hiprintTemplate.getPrinterList();
+    return x;
+}
+
+
+//客户端直接打印
+function print2(printData, config) {
+    hiprintTemplate.print2(printData, config || {});
+}
+
+
 
 //生成pdf
 function toPdf(printData,fileName) {
@@ -223,4 +257,4 @@ const createProviderList = function (optionList) {
 
 
 
-export { buildDesigner, buildProvider, autoConnect, disAutoConnect, getHtml, getJson, getJsonTid, update, print, toPdf ,setPaper, rotatePaper, setElsAlign, clear };
+export { createHiprintTemplate, buildDesigner, buildProvider, autoConnect, disAutoConnect, getHtml, getJson, getJsonTid, update, print, setHost, isOpened, getPrinterList,print2, toPdf ,setPaper, rotatePaper, setElsAlign, clear };

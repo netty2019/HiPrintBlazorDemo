@@ -1,10 +1,27 @@
 ﻿@page "/editPrintTemplate"
 @using System.Reflection;
 @using HiPrintTest.Models;
+@inject IMessageService _message
+
 <Modal DefaultMaximized  Visible="true">
+
+<Row>
+    <Col Span="24" Style="margin-bottom:24px">
+        <Button OnClick='async (e)=>await HiPrint!.SetHostAsync("http://172.23.0.157:17521")'>连接打印客户端</Button>
+        <Button OnClick='async (e)=>{var isOpened= await HiPrint!.IsOpenedAsync();_=_message.Info(isOpened.ToString());}'>获取连接状态</Button>
+        <Button OnClick='async (e)=>{ PrinterList=await HiPrint!.GetPrinterListAsync();}'>获取打印机列表</Button>
+        <RadioGroup TValue="string" >
+            @foreach(dynamic printer in PrinterList)
+            {
+                <Radio Value="@((string)printer.name)">@((string)printer.name)</Radio>
+            }
+        </RadioGroup>
+    </Col>
+</Row>
+
 <Row >
     <Col Style="margin-bottom:24px">
-    <RadioGroup @bind-Value="@PageType" ButtonStyle="@RadioButtonStyle.Solid">
+    <RadioGroup @bind-Value="@PageType" ButtonStyle="@RadioButtonStyle.Solid" OnChange="async(string e)=>await ChangePageSize()">
             <Radio RadioButton Value="@("A3")">A3</Radio>
             <Radio RadioButton Value="@("A4")">A4</Radio>
             <Radio RadioButton Value="@("A5")">A5</Radio>
@@ -17,20 +34,25 @@
         </RadioGroup>
 
 
-      <Button Icon="redo" >旋转</Button>
+      <Button Icon="redo" OnClick="async(e)=>await HiPrint!.RotatePaperAsync()">旋转</Button>
 
       <ButtonGroup>
-            <Button   OnClick='async (e)=>await PrintDesigner!.SetElsAlignAsync("left")'>左对齐</Button>
-            <Button   OnClick='async (e)=>await PrintDesigner!.SetElsAlignAsync("center")'>居中</Button>
-            <Button   OnClick='async (e)=>await PrintDesigner!.SetElsAlignAsync("right")'>右对齐</Button>
+            <Button OnClick='async (e)=>await HiPrint!.SetElsAlignAsync("left")'>左对齐</Button>
+            <Button OnClick='async (e)=>await HiPrint!.SetElsAlignAsync("center")'>水平居中</Button>
+            <Button OnClick='async (e)=>await HiPrint!.SetElsAlignAsync("right")'>右对齐</Button>
+            <Button OnClick='async (e)=>await HiPrint!.SetElsAlignAsync("top")'>顶部对齐</Button>
+            <Button OnClick='async (e)=>await HiPrint!.SetElsAlignAsync("horizontal")'>垂直居中</Button>
+            <Button OnClick='async (e)=>await HiPrint!.SetElsAlignAsync("bottom")'>底部对齐</Button>
+            <Button OnClick='async (e)=>await HiPrint!.SetElsAlignAsync("distributeHor")'>横向分散</Button>
+            <Button OnClick='async (e)=>await HiPrint!.SetElsAlignAsync("distributeVer")'>纵向分散</Button>
        </ButtonGroup>
 
-       <Button Icon="Clear" Danger OnClick="async (e)=>await PrintDesigner!.ClearAsync()">清空</Button>
+        <Button Icon="Clear" Danger OnClick="async (e)=>await HiPrint!.ClearAsync()">清空</Button>
 
-       <Button  Icon="eye" OnClick="async (e)=>{ Html=await PrintDesigner!.GetHtmlAsync(new{});PreviewVisible=true;}">预览</Button>
+        <Button Icon="eye" OnClick="async (e)=>{ Html=await HiPrint!.GetHtmlAsync(Order);PreviewVisible=true;}">预览</Button>
      </Col>
 </Row>
-            <PrintDesigner @ref="PrintDesigner" AfterInit="async (e)=>{ await PrintDesigner!.BuildDesignerAsync();await BuildProviderAsync();}"></PrintDesigner>
+            <HiPrint @ref="HiPrint" AfterInit="async (e)=>{ await HiPrint!.BuildDesignerAsync();await BuildProviderAsync();}"></HiPrint>
 </Modal>
 
 
@@ -39,8 +61,8 @@
        OnCancel="e=>PreviewVisible = false">
     <Row>
        <Col Span="24">
-           <Button OnClick="async(e)=>await PrintDesigner!.PrintAsync(new {})">打印</Button>
-        <Button OnClick='async(e)=>await PrintDesigner!.ToPdfAsync(new {},"打印预览pdf")'>生成Pdf</Button>
+        <Button OnClick="async(e)=>await HiPrint!.PrintAsync(Order)">打印</Button>
+        <Button OnClick='async(e)=>await HiPrint!.ToPdfAsync(Order,"打印预览pdf")'>生成Pdf</Button>
        </Col>
     </Row>
     @((MarkupString)Html)
@@ -48,7 +70,7 @@
 
 
 @code {
-    private PrintDesigner? PrintDesigner { get; set; }
+    private HiPrint? HiPrint { get; set; }
 
     private string PageType { get; set; } = "A4";
 
@@ -61,6 +83,39 @@
     private bool PreviewVisible = false;
 
     private string Html="";
+
+    private dynamic[] PrinterList = Array.Empty<dynamic>();
+
+    private Order Order = new Order
+    {
+        订单号 = "XSDD009434433",
+        订单类型 = "销售订单",
+        客户编号 = "KH0001",
+        客户名称 = "上海特斯拉超级工厂",
+        业务日期 = DateTime.Now,
+        总价 = 45690,
+        订单明细 = new OrderItem[] {
+               new OrderItem
+               {
+                产品名称="电脑主机",
+                 产品编号="CP000234",
+                 数量=23,
+               },
+                              new OrderItem
+               {
+                产品名称="CPU",
+                 产品编号="CP000231",
+                 数量=90,
+               },
+                              new OrderItem
+               {
+                产品名称="电磁阀",
+                 产品编号="CP000234",
+                 数量=23,
+               },
+          }
+    };
+
 
     private RenderFragment FragmentChangePageSize =>
     @<AntDesign.Row Style="width:200px">
@@ -96,10 +151,10 @@
                 }).ToArray().Concat(new object[]
                 {
                         new {
-                                Id = "tableCustom",
+                                    Id = "tableCustom",
                                     Type = "tableCustom",
-                                    Title = "明细",
-                                    Field = "table",
+                                    Title = "订单明细",
+                                    Field = "订单明细",
                                     Columns =
                                     new object[] { 
                                         GetPropertyNames(typeof(OrderItem)).Select(propertyName=>new
@@ -115,7 +170,7 @@
             },
         };
 
-        await PrintDesigner!.BuildProviderAsync(entityProviderCfg, true);
+        await HiPrint!.BuildProviderAsync(entityProviderCfg, true);
 
         var assistProviderCfg = new
         {
@@ -128,6 +183,11 @@
                                 Id = "img",
                                 Type = "img",
                                 Title = "图片",
+                            },
+                            new {
+                                Id = "text",
+                                Type = "text",
+                                Title = "文本",
                             },
                             new {
                                 Id = "hLine",
@@ -149,10 +209,24 @@
                                 Type = "oval",
                                 Title = "圆形",
                             },
-             },
+     },
             },
         };
-        await PrintDesigner!.BuildProviderAsync(assistProviderCfg, false);
+        await HiPrint!.BuildProviderAsync(assistProviderCfg, false);
+    }
+
+
+    private async Task ChangePageSize()
+    {
+        if (PageType != "customer")
+        {
+            await HiPrint!.SetPaperAsync(PageType);
+        }
+        else
+        {
+            await HiPrint!.SetPaperAsync(PageWidth??0,PageHeight??0);
+        }
+
     }
 
 

@@ -50,6 +50,9 @@
             //不自动连接打印服务
             await DisAutoConnectAsync();
 
+            //创建HiprintTemplate对象
+            await module!.InvokeVoidAsync("createHiprintTemplate");
+
             await AfterInit.InvokeAsync();
         }
         await base.OnAfterRenderAsync(firstRender);
@@ -62,6 +65,7 @@
     public async Task BuildDesignerAsync()
     {
         Visible = true;
+        StateHasChanged();
         await module!.InvokeVoidAsync("buildDesigner");
     }
 
@@ -144,7 +148,7 @@
     }
 
     /// <summary>
-    /// 打印
+    /// 浏览器打印
     /// </summary>
     /// <param name="printData"></param>
     /// <returns></returns>
@@ -152,6 +156,50 @@
     {
         await module!.InvokeVoidAsync("print", printData);
     }
+
+
+    /// <summary>
+    /// 设置打印客户端地址
+    /// </summary>
+    /// <param name="address"></param>
+    /// <returns></returns>
+    public async Task SetHostAsync(string address)
+    {
+        await module!.InvokeVoidAsync("setHost", address);
+    }
+
+
+    /// <summary>
+    /// 与打印客户端是否成功连接
+    /// </summary>
+    /// <returns></returns>
+    public async Task<bool> IsOpenedAsync()
+    {
+        return await module!.InvokeAsync<bool>("isOpened");
+    }
+
+
+    /// <summary>
+    /// 获取打印机列表
+    /// </summary>
+    /// <returns></returns>
+    public async Task<dynamic[]> GetPrinterListAsync()
+    {
+        return await module!.InvokeAsync<dynamic[]>("getPrinterList");
+    }
+
+
+
+    /// <summary>
+    /// 直接打印
+    /// </summary>
+    /// <param name="printData"></param>
+    /// <returns></returns>
+    public async Task PrintAsync(object printData,object? config= null)
+    {
+        await module!.InvokeVoidAsync("print2", printData,config);
+    }
+
 
 
     /// <summary>
