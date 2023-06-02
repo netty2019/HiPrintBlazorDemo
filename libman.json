@@ -1,0 +1,103 @@
+{
+  "version": "1.0",
+  "defaultProvider": "unpkg",
+  "libraries": [
+    {
+      "library": "jsbarcode@3.11.5",
+      "destination": "wwwroot/lib/jsbarcode/",
+      "files": [
+        "dist/JsBarcode.all.min.js"
+      ]
+    },
+    {
+      "library": "@claviska/jquery-minicolors@2.3.6",
+      "destination": "wwwroot/lib/claviska/jquery-minicolors/",
+      "files": [
+        "jquery.minicolors.min.js"
+      ]
+    },
+    {
+      "provider": "unpkg",
+      "library": "socket.io-client@4.6.1",
+      "destination": "wwwroot/lib/socket.io-client/",
+      "files": [
+        "dist/socket.io.min.js"
+      ]
+    },
+    {
+      "provider": "unpkg",
+      "library": "rgbcolor@1.0.1",
+      "destination": "wwwroot/lib/rgbcolor/",
+      "files": [
+        "index.js"
+      ]
+    },
+
+    {
+      "provider": "unpkg",
+      "library": "jspdf@2.5.1",
+      "destination": "wwwroot/lib/jspdf/",
+      "files": [
+        "dist/jspdf.umd.min.js"
+      ]
+    },
+    {
+      "provider": "unpkg",
+      "library": "html2canvas@1.4.1",
+      "destination": "wwwroot/lib/html2canvas/",
+      "files": [
+        "dist/html2canvas.js"
+      ]
+    },
+    {
+      "provider": "unpkg",
+      "library": "vue-plugin-hiprint@0.0.52",
+      "destination": "wwwroot/lib/vue-plugin-hiprint/",
+      "files": [
+        "dist/vue-plugin-hiprint.js"
+      ]
+    },
+    {
+      "provider": "unpkg",
+      "library": "canvg@3.0.10",
+      "destination": "wwwroot/lib/canvg/",
+      "files": [
+        "lib/umd.js"
+      ]
+    },
+    {
+      "provider": "unpkg",
+      "library": "jquery@3.6.1",
+      "destination": "wwwroot/lib/jquery/",
+      "files": [
+        "dist/jquery.min.js"
+      ]
+    },
+    {
+      "provider": "unpkg",
+      "library": "vue-plugin-hiprint@0.0.52",
+      "destination": "wwwroot/lib/vue-plugin-hiprint/",
+      "files": [
+        "dist/print-lock.css"
+      ]
+    },
+    {
+      "provider": "unpkg",
+      "library": "vue-plugin-hiprint@0.0.52",
+      "destination": "wwwroot/lib/vue-plugin-hiprint/",
+      "files": [
+        "dist/print-lock.css",
+        "dist/vue-plugin-hiprint.js"
+      ]
+    },
+    {
+      "provider": "unpkg",
+      "library": "socket.io-client@4.6.1",
+      "destination": "wwwroot/lib/socket.io-client/",
+      "files": [
+        "dist/socket.io.min.js",
+        "dist/socket.io.min.js.map"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,180 @@
+﻿@page "/editPrintTemplate"
+@using System.Reflection;
+@using HiPrintTest.Models;
+<Modal DefaultMaximized  Visible="true">
+<Row >
+    <Col Style="margin-bottom:24px">
+    <RadioGroup @bind-Value="@PageType" ButtonStyle="@RadioButtonStyle.Solid">
+            <Radio RadioButton Value="@("A3")">A3</Radio>
+            <Radio RadioButton Value="@("A4")">A4</Radio>
+            <Radio RadioButton Value="@("A5")">A5</Radio>
+            <Radio RadioButton Value="@("B3")">B3</Radio>
+            <Radio RadioButton Value="@("B4")">B4</Radio>
+            <Radio RadioButton Value="@("B5")">B5</Radio>
+            <Popover ContentTemplate="@FragmentChangePageSize" Title="设置纸张宽高(mm)" ComplexAutoCloseAndVisible  Visible="PageSizeVisible"  OnVisibleChange="e=>PageSizeVisible=e" Trigger="@(new AntDesign.Trigger[] { AntDesign.Trigger.Click})">
+                <Radio RadioButton Value="@("customer")">自定义</Radio>
+            </Popover>
+        </RadioGroup>
+
+
+      <Button Icon="redo" >旋转</Button>
+
+      <ButtonGroup>
+            <Button   OnClick='async (e)=>await PrintDesigner!.SetElsAlignAsync("left")'>左对齐</Button>
+            <Button   OnClick='async (e)=>await PrintDesigner!.SetElsAlignAsync("center")'>居中</Button>
+            <Button   OnClick='async (e)=>await PrintDesigner!.SetElsAlignAsync("right")'>右对齐</Button>
+       </ButtonGroup>
+
+       <Button Icon="Clear" Danger OnClick="async (e)=>await PrintDesigner!.ClearAsync()">清空</Button>
+
+       <Button  Icon="eye" OnClick="async (e)=>{ Html=await PrintDesigner!.GetHtmlAsync(new{});PreviewVisible=true;}">预览</Button>
+     </Col>
+</Row>
+            <PrintDesigner @ref="PrintDesigner" AfterInit="async (e)=>{ await PrintDesigner!.BuildDesignerAsync();await BuildProviderAsync();}"></PrintDesigner>
+</Modal>
+
+
+@*预览框*@
+<Modal Visible="PreviewVisible" Width="1000"
+       OnCancel="e=>PreviewVisible = false">
+    <Row>
+       <Col Span="24">
+           <Button OnClick="async(e)=>await PrintDesigner!.PrintAsync(new {})">打印</Button>
+        <Button OnClick='async(e)=>await PrintDesigner!.ToPdfAsync(new {},"打印预览pdf")'>生成Pdf</Button>
+       </Col>
+    </Row>
+    @((MarkupString)Html)
+</Modal>
+
+
+@code {
+    private PrintDesigner? PrintDesigner { get; set; }
+
+    private string PageType { get; set; } = "A4";
+
+    private int? PageWidth;
+
+    private int? PageHeight;
+
+    private bool PageSizeVisible = false;
+
+    private bool PreviewVisible = false;
+
+    private string Html="";
+
+    private RenderFragment FragmentChangePageSize =>
+    @<AntDesign.Row Style="width:200px">
+        <AntDesign.Col Span="11">
+            <AntDesign.InputNumber @bind-Value="PageWidth" Min="0"  PlaceHolder="宽(mm)" Style="width:100%"></AntDesign.InputNumber>
+        </AntDesign.Col>
+        <AntDesign.Col Span="2" Style="text-align:center">~</AntDesign.Col>
+        <AntDesign.Col Span="11">
+            <AntDesign.InputNumber @bind-Value="PageHeight" Min="0" PlaceHolder="高(mm)" Style="width:100%"></AntDesign.InputNumber>
+        </AntDesign.Col>
+        <AntDesign.Col Span="24" Style="margin-top:10px">
+            <AntDesign.Button Type="@ButtonType.Primary" Style="width:100%" OnClick="e=>PageSizeVisible=false">确定</AntDesign.Button>
+        </AntDesign.Col>
+        </AntDesign.Row>
+    ;
+
+    private async Task BuildProviderAsync()
+    {
+        var entityProviderCfg = new
+        {
+            Key = "Entity",
+            Options = new
+            {
+                GroupName = "订单",
+                PrintElements = GetPropertyNames(typeof(Order)).Select(propertyName => new
+                {
+                    Id = propertyName,
+                    Type = "txt",
+                    Width = 100,
+                    Height = 20,
+                    Title = propertyName,
+                    Field = propertyName,
+                }).ToArray().Concat(new object[]
+                {
+                        new {
+                                Id = "tableCustom",
+                                    Type = "tableCustom",
+                                    Title = "明细",
+                                    Field = "table",
+                                    Columns =
+                                    new object[] { 
+                                        GetPropertyNames(typeof(OrderItem)).Select(propertyName=>new
+                                       { 
+                                        Title = propertyName,
+                                        Align = "center",
+                                        Field = propertyName,
+                                        Width = 100
+                                       }).ToArray()
+                                    },
+                            }
+                })
+            },
+        };
+
+        await PrintDesigner!.BuildProviderAsync(entityProviderCfg, true);
+
+        var assistProviderCfg = new
+        {
+            Key = "Assist",
+            Options = new
+            {
+                GroupName = "辅助",
+                PrintElements = new object[] {
+                            new {
+                                Id = "img",
+                                Type = "img",
+                                Title = "图片",
+                            },
+                            new {
+                                Id = "hLine",
+                                Type = "hLine",
+                                Title = "横线",
+                            },
+                            new {
+                                Id = "vLine",
+                                Type = "vLine",
+                                Title = "竖线",
+                            },
+                            new {
+                                Id = "rect",
+                                Type = "rect",
+                                Title = "矩形",
+                            },
+                            new {
+                                Id = "oval",
+                                Type = "oval",
+                                Title = "圆形",
+                            },
+             },
+            },
+        };
+        await PrintDesigner!.BuildProviderAsync(assistProviderCfg, false);
+    }
+
+
+    /// <summary>
+    /// 获取类的属性名称
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    private IEnumerable<string> GetPropertyNames(Type type)
+    {
+        var propertyNames = type
+            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            .Where(f => TypeFilter(f.PropertyType))
+            .Select(f => f.Name).ToList();
+
+        return propertyNames;
+    }
+
+
+    private bool TypeFilter(Type type)
+    {
+        return type.IsEnum || type.GetUnderlyingType().IsEnum ||
+          new Type[] { typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal), typeof(string), typeof(DateTime) }.Contains(type);
+    }
+}

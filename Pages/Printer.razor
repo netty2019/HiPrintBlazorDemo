@@ -1,0 +1,127 @@
+﻿@page "/test"
+
+@inject IJSRuntime jsRuntime
+@implements IAsyncDisposable
+<Button @onclick="previewClick">预览测试</Button>
+<h1>@currentCount</h1>
+<Button @onclick="IncrementCount">按钮2</Button>
+
+<Modal 
+       Visible="@_visible"
+       OnOk="@HandleOk"
+       OnCancel="@HandleCancel" Width="1000">
+    <Button OnClick="print">打印</Button>
+    @((MarkupString)html)
+</Modal>
+
+
+<PrintDesigner></PrintDesigner>
+@code {
+    bool _visible = false;
+
+    private void HandleOk(MouseEventArgs e)
+    {
+        Console.WriteLine(e);
+        _visible = false;
+    }
+
+    private void HandleCancel(MouseEventArgs e)
+    {
+        Console.WriteLine(e);
+        _visible = false;
+    }
+
+
+    string html = "";
+
+
+    [Parameter]
+    public string Html { get; set; }="xxx";
+
+    [Parameter]
+    public EventCallback<string> HtmlChanged { get; set; }
+
+    private IJSObjectReference? module;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            //jquery
+            await jsRuntime.InvokeVoidAsync("loadScript", "lib/jquery/dist/jquery.min.js");
+            //条形码
+            await jsRuntime.InvokeVoidAsync("loadScript", "lib/jsbarcode/dist/jsbarcode.all.min.js");
+            //颜色选择器
+            await jsRuntime.InvokeVoidAsync("loadScript", "lib/claviska/jquery-minicolors/jquery.minicolors.min.js");
+            //直接打印(print2)需要
+            await jsRuntime.InvokeVoidAsync("loadScript", "lib/socket.io-client/dist/socket.io.min.js");
+            //toPdf需要
+            await jsRuntime.InvokeVoidAsync("loadScript", "lib/canvg/lib/umd.js");
+            await jsRuntime.InvokeVoidAsync("loadScript", "lib/jspdf/dist/jspdf.umd.min.js");
+            await jsRuntime.InvokeVoidAsync("loadScript", "lib/html2canvas/dist/html2canvas.js");
+            //vue-plugin-hiprint
+            await jsRuntime.InvokeVoidAsync("loadScript", "lib/vue-plugin-hiprint/dist/vue-plugin-hiprint.js");
+
+            module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", "./Pages/Printer.razor.js");
+
+            await module!.InvokeVoidAsync("init");
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+
+    async Task previewClick()
+    {
+        html = await module!.InvokeAsync<string>("getHtml", new { barcode = "34343434343" });
+        _visible = true;
+    }
+
+    async Task getHtml()
+    {   
+        var xx = await module!.InvokeAsync<string>("getJson");
+    }
+
+    async Task print()
+    {
+        await module!.InvokeVoidAsync("print", new { name = "hello" });
+    }
+
+    /// <summary>
+    /// 设置纸张
+    /// </summary>
+    /// <param name="paperType">A4 A5 ...</param>
+    /// <returns></returns>
+    async Task SetPaper(string paperType)
+    {
+        await module!.InvokeVoidAsync("setPaper", paperType);
+    }
+
+    /// <summary>
+    /// 设置纸张尺寸
+    /// </summary>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <returns></returns>
+    async Task SetPaper(int width,int height)
+    {
+        await module!.InvokeVoidAsync("setPaper", width, height);
+    }
+
+
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module is not null)
+        {
+            await module.DisposeAsync();
+        }
+    }
+
+}

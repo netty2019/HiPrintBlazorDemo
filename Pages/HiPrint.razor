@@ -1,0 +1,237 @@
+﻿@inject IJSRuntime jsRuntime
+@implements IAsyncDisposable
+
+@if (Visible)
+{
+    <div>
+        <Card >
+            <CardGrid Class="left">
+                <div id="provider-container"></div>
+            </CardGrid>
+            <CardGrid Class="center">
+                <div id="hiprint-printTemplate"></div>
+            </CardGrid>
+            <CardGrid Class="right">
+                <div id="PrintElementOptionSetting"></div>
+            </CardGrid>
+        </Card>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public EventCallback AfterInit { get; set; }
+
+    public bool Visible = false;
+
+    private IJSObjectReference? module;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            //jquery
+            await jsRuntime.InvokeVoidAsync("loadScript", "lib/jquery/dist/jquery.min.js");
+            //条形码
+            await jsRuntime.InvokeVoidAsync("loadScript", "lib/jsbarcode/dist/jsbarcode.all.min.js");
+            //颜色选择器
+            await jsRuntime.InvokeVoidAsync("loadScript", "lib/claviska/jquery-minicolors/jquery.minicolors.min.js");
+            //直接打印(print2)需要
+            await jsRuntime.InvokeVoidAsync("loadScript", "lib/socket.io-client/dist/socket.io.min.js");
+            //toPdf需要
+            await jsRuntime.InvokeVoidAsync("loadScript", "lib/canvg/lib/umd.js");
+            await jsRuntime.InvokeVoidAsync("loadScript", "lib/jspdf/dist/jspdf.umd.min.js");
+            await jsRuntime.InvokeVoidAsync("loadScript", "lib/html2canvas/dist/html2canvas.js");
+            //vue-plugin-hiprint
+            await jsRuntime.InvokeVoidAsync("loadScript", "lib/vue-plugin-hiprint/dist/vue-plugin-hiprint.js");
+
+            module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", "./Pages/HiPrint.razor.js");
+
+            //不自动连接打印服务
+            await DisAutoConnectAsync();
+
+            await AfterInit.InvokeAsync();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    /// <summary>
+    /// 构建设计器
+    /// </summary>
+    /// <returns></returns>
+    public async Task BuildDesignerAsync()
+    {
+        Visible = true;
+        await module!.InvokeVoidAsync("buildDesigner");
+    }
+
+
+
+    /// <summary>
+    /// 构建左侧拖拽面板
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="clear"></param>
+    /// <returns></returns>
+    public async Task BuildProviderAsync(object data,bool clear)
+    {
+        await module!.InvokeVoidAsync("buildProvider",data,clear);
+    }
+
+
+
+    /// <summary>
+    /// 自动连接打印服务
+    /// </summary>
+    /// <returns></returns>
+    public async Task AutoConnectAsync()
+    {
+        await module!.InvokeVoidAsync("autoConnect");
+    }
+
+
+    /// <summary>
+    /// 不自动连接打印服务
+    /// </summary>
+    /// <returns></returns>
+    public async Task DisAutoConnectAsync()
+    {
+        await module!.InvokeVoidAsync("disAutoConnect");
+    }
+
+
+    /// <summary>
+    /// 获取Html,预览用
+    /// </summary>
+    /// <param name="printData"></param>
+    /// <returns></returns>
+    public async Task<string> GetHtmlAsync(object printData)
+    {
+        return await module!.InvokeAsync<string>("getHtml", printData);
+    }
+
+
+    /// <summary>
+    /// 导出Json模板
+    /// </summary>
+    /// <returns></returns>
+    public async Task<string> GetJsonAsync()
+    {
+        return await module!.InvokeAsync<string>("getJson");
+    }
+
+
+
+    /// <summary>
+    /// 导出部分Json模板
+    /// 就是仅导出 options, 不导出 printElementType，一些其他数据需要再 provider 中获取，所以一点要先 init 对应的 provider
+    /// </summary>
+    /// <returns></returns>
+    public async Task<string> GetJsonTidAsync()
+    {
+        return await module!.InvokeAsync<string>("getJsonTid");
+    }
+
+
+    /// <summary>
+    /// 更新模板
+    /// </summary>
+    /// <param name="json"></param>
+    /// <returns></returns>
+    public async Task UpdateAsync(string json)
+    {
+        await module!.InvokeVoidAsync("update", json);
+    }
+
+    /// <summary>
+    /// 打印
+    /// </summary>
+    /// <param name="printData"></param>
+    /// <returns></returns>
+    public async Task PrintAsync(object printData)
+    {
+        await module!.InvokeVoidAsync("print", printData);
+    }
+
+
+    /// <summary>
+    /// 生成Pdf
+    /// </summary>
+    /// <param name="printData"></param>
+    /// <param name="fileName"></param>
+    /// <returns></returns>
+    public async Task ToPdfAsync(object printData,string fileName)
+    {
+        await module!.InvokeVoidAsync("toPdf", printData, fileName);
+    }
+
+
+    /// <summary>
+    /// 调整纸张尺寸
+    /// </summary>
+    /// <param name="paperType"></param>
+    /// <returns></returns>
+    public async Task SetPaperAsync(string paperType)
+    {
+        await module!.InvokeVoidAsync("setPaper", paperType);
+    }
+
+
+    /// <summary>
+    /// 调整纸张尺寸
+    /// </summary>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <returns></returns>
+    public async Task SetPaperAsync(int width, int height)
+    {
+        await module!.InvokeVoidAsync("setPaper", width, height);
+    }
+
+
+    /// <summary>
+    /// 旋转
+    /// </summary>
+    /// <returns></returns>
+    public async Task RotatePaperAsync()
+    {
+        await module!.InvokeVoidAsync("rotatePaper");
+    }
+
+
+    /// <summary>
+    /// 对选中的元素对齐
+    /// </summary>
+    /// <param name="type">左:left 居中:vertical 右:right 顶部:top  垂直居中:horizontal 底部:bottom 横向分散:distributeHor 纵向分散:distributeVer</param>
+    /// <returns></returns>
+    public async Task SetElsAlignAsync(string type)
+    {
+        await module!.InvokeVoidAsync("setElsAlign", type);
+    }
+
+
+
+    /// <summary>
+    /// 清空
+    /// </summary>
+    /// <returns></returns>
+    public async Task ClearAsync()
+    {
+        await module!.InvokeVoidAsync("clear");
+    }
+
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module is not null)
+        {
+            await module.DisposeAsync();
+        }
+    }
+
+}
+
+
+
+
+
